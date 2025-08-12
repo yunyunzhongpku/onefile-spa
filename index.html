@@ -121,6 +121,7 @@
     <h2>待办</h2>
     <div class="row">
       <input class="grow" type="text" id="todoInput" placeholder="新的待办…" aria-label="新增待办" />
+      <input type="date" id="todoDue" aria-label="截止日期" />
       <button class="btn success" id="addTodo">添加</button>
     </div>
     <div class="divider"></div>
@@ -262,6 +263,7 @@
   const addTodoBtn = $('#addTodo');
   const todosList = $('#todosList');
   const todoStats = $('#todoStats');
+  const todoDue = $('#todoDue');
 
   function renderTodos(){
     todosList.innerHTML = '';
@@ -269,10 +271,16 @@
     for(const t of state.todos){
       const el = document.createElement('div');
       el.className = 'item';
+      const due = t.due ? new Date(t.due) : null;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const overdue = due ? (due.getTime() < today.getTime() && !t.done) : false;
       el.innerHTML = `
         <div class="left">
           <input type="checkbox" ${t.done? 'checked':''} data-toggle="${t.id}" aria-label="切换待办完成状态" />
-          <div ${t.done? 'style="text-decoration:line-through;opacity:.7"':''}>${escapeHTML(t.text)}</div>
+          <div ${t.done? 'style="text-decoration:line-through;opacity:.7"':''}>
+            ${escapeHTML(t.text)}
+            ${t.due ? `<span class="chip" style="margin-left:8px; ${overdue ? 'background:rgba(239,68,68,.25);border:1px solid rgba(239,68,68,.5)' : ''}">截止：${t.due}${overdue ? '（已逾期）' : ''}</span>` : ''}
+          </div>
         </div>
         <button class="btn ghost" data-del-todo="${t.id}" title="删除">🗑️</button>
       `;
@@ -292,7 +300,8 @@
 
   addTodoBtn.addEventListener('click', ()=>{
     const text = (todoInput.value || '').trim(); if(!text) return;
-    state.todos.push({ id: uid(), text, done:false, created: Date.now() }); save(); todoInput.value=''; renderTodos();
+    state.todos.push({ id: uid(), text, done:false, created: Date.now(), due: (todoDue?.value || '') });
+    if (todoDue) todoDue.value = '';
   });
   todosList.addEventListener('click', (e)=>{
     const t = e.target;
