@@ -105,6 +105,7 @@
     </div>
     <div class="spacer"></div>
     <textarea id="noteBody" placeholder="请输入内容…" aria-label="笔记正文"></textarea>
+    <div id="noteCount" class="muted">0 字</div>
     <div class="spacer"></div>
     <div class="row">
       <button class="btn primary" id="saveNote">保存笔记</button>
@@ -187,6 +188,14 @@
   // --- Notes ---
   const noteTitle = $('#noteTitle');
   const noteBody = $('#noteBody');
+  const noteCount = $('#noteCount');
+  function updateNoteCount() {
+    const len = (noteTitle.value.trim().length + noteBody.value.trim().length);
+    if (noteCount) noteCount.textContent = `${len} 字`;
+  }
+  noteTitle.addEventListener('input', updateNoteCount);
+  noteBody.addEventListener('input', updateNoteCount);
+  updateNoteCount();
   const notesList = $('#notesList');
   const noteSearch = $('#noteSearch');
 
@@ -198,7 +207,7 @@
       notesList.innerHTML = `<div class="muted">暂无笔记。</div>`;
       return;
     }
-    for(const n of filtered.sort((a,b)=>b.updated-a.updated)){
+    for (const n of filtered.sort((a,b) => (Number(b.pinned) - Number(a.pinned)) || (b.updated - a.updated))) {
       const el = document.createElement('div');
       el.className = 'item';
       el.innerHTML = `
@@ -209,6 +218,7 @@
           </div>
         </div>
         <div style="display:flex;gap:6px">
+          <button class="btn ghost" data-pin="${n.id}">${n.pinned ? '取消置顶' : '置顶'}</button>
           <button class="btn ghost" data-edit="${n.id}">编辑</button>
           <button class="btn danger" data-del="${n.id}">删除</button>
         </div>
@@ -225,7 +235,7 @@
     if(!title && !body){ noteTitle.focus(); return; }
     const existing = state._editingNoteId && state.notes.find(n=>n.id===state._editingNoteId);
     if(existing){ existing.title = title; existing.body = body; existing.updated = Date.now(); state._editingNoteId = null; }
-    else { state.notes.push({ id: uid(), title, body, created: Date.now(), updated: Date.now() }); }
+    else { state.notes.push({ id: uid(), title, body, created: Date.now(), updated: Date.now(), pinned: false });}
     save(); noteTitle.value=''; noteBody.value=''; renderNotes();
   });
 
@@ -237,6 +247,10 @@
     if(t.dataset.edit){
       const id = t.dataset.edit; const n = state.notes.find(n=>n.id===id);
       if(n){ noteTitle.value = n.title; noteBody.value = n.body; state._editingNoteId = id; location.hash = '#notes'; }
+    }
+    if (t.dataset.pin) {
+      const n = state.notes.find(x => x.id === t.dataset.pin);
+      if (n) { n.pinned = !n.pinned; n.updated = Date.now(); save(); renderNotes(); }
     }
   });
 
