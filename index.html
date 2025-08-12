@@ -260,7 +260,7 @@
 
   // --- Todos ---
   const todoInput = $('#todoInput');
-  const addTodoBtn = $('#addTodo');
+  const  = $('#addTodo');
   const todosList = $('#todosList');
   const todoStats = $('#todoStats');
   const todoDue = $('#todoDue');
@@ -299,9 +299,19 @@
   function delTodo(id){ state.todos = state.todos.filter(t=>t.id!==id); save(); renderTodos(); }
 
   addTodoBtn.addEventListener('click', ()=>{
-    const text = (todoInput.value || '').trim(); if(!text) return;
-    state.todos.push({ id: uid(), text, done:false, created: Date.now(), due: (todoDue?.value || '') });
+    const text = (todoInput.value || '').trim(); 
+    if(!text) return;
+    state.todos.push({
+      id: uid(), 
+      text, 
+      done:false, 
+      created: Date.now(), 
+      due: (todoDue?.value || '')
+    });
+    save();                 // ✅ 保存到 localStorage
+    todoInput.value = '';   // ✅ 清空输入框（可选，但体验好）
     if (todoDue) todoDue.value = '';
+    renderTodos();          // ✅ 重新渲染列表
   });
   todosList.addEventListener('click', (e)=>{
     const t = e.target;
